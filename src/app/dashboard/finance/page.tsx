@@ -1,8 +1,18 @@
 "use client";
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { Table, THead, Th, Td, Badge } from '@/components/ui/Table';
-import { GenerateInvoiceButton } from '@/components/dashboard/GenerateInvoiceButton';
 import { CreditCard, ArrowUpRight, TrendingDown, DollarSign } from 'lucide-react';
+
+// IMPORT DYNAMIQUE : On force Next.js à charger ce composant uniquement côté client
+const GenerateInvoiceButton = dynamic(
+  () => import('@/components/dashboard/GenerateInvoiceButton').then((mod) => mod.GenerateInvoiceButton),
+  { 
+    ssr: false,
+    // On met un petit squelette de chargement le temps que le PDF se prépare côté client
+    loading: () => <div className="h-9 w-36 bg-slate-100 animate-pulse rounded-xl"></div> 
+  }
+);
 
 // Exemple de données "Inqom style"
 const MOCK_INVOICES = [
