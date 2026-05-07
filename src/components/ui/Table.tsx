@@ -15,9 +15,10 @@ export const THead = ({ children }: { children: React.ReactNode }) => (
   </thead>
 );
 
-export const Th = ({ children }: { children: React.ReactNode }) => (
+export const Th = ({ children }: { children: React.ReactNode, className?: string }) => (
   <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-    {children}
+    {children ? children : null}
+    {/* {children} */}
   </th>
 );
 

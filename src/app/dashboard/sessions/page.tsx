@@ -1,16 +1,29 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Table, THead, Th, Td, Badge } from '@/components/ui/Table';
 import { createClient } from '@/utils/supabase/client';
 import { TrainingSession } from '@/types/database';
-import { Search, Filter, MoreHorizontal, Calendar, Users as UsersIcon } from 'lucide-react';
+import { 
+  Search, 
+  Filter, 
+  MoreHorizontal, 
+  Calendar, 
+  Eye, 
+  Users as UsersIcon, 
+  FileText
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const router = useRouter();
   const supabase = createClient();
+  const menuRef = useRef<HTMLDivElement>(null);
 
+  // Fetch des sessions
   useEffect(() => {
     const fetchSessions = async () => {
       const { data, error } = await supabase
@@ -23,6 +36,22 @@ export default function SessionsPage() {
     };
     fetchSessions();
   }, []);
+
+  // Fermer le menu si on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleMenu = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Empêche le clic de se propager
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
 
   return (
     <div className="space-y-6">
@@ -53,13 +82,15 @@ export default function SessionsPage() {
             <Th>Période</Th>
             <Th>Statut</Th>
             <Th>Source</Th>
-            <Th>Actions</Th>
+            <Th className="text-right">Actions</Th>
           </tr>
         </THead>
         <tbody>
           <AnimatePresence mode='wait'>
             {loading ? (
-              <tr><Td className="text-center py-12" ><span className="animate-pulse text-slate-400">Chargement des données...</span></Td></tr>
+              <tr><Td colSpan={5} className="text-center py-12"><span className="animate-pulse text-slate-400">Chargement des données...</span></Td></tr>
+            ) : sessions.length === 0 ? (
+              <tr><Td colSpan={5} className="text-center py-12 text-slate-500">Aucune session trouvée.</Td></tr>
             ) : (
               sessions.map((session, index) => (
                 <motion.tr 
@@ -67,13 +98,15 @@ export default function SessionsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   key={session.id} 
-                  className="hover:bg-slate-50/50 transition-colors group"
+                  className="hover:bg-slate-50/50 transition-colors group relative"
                 >
                   <Td className="font-semibold text-slate-900">{session.title}</Td>
                   <Td>
                     <div className="flex items-center gap-2">
                       <Calendar size={14} className="text-slate-400" />
-                      {new Date(session.start_date).toLocaleDateString('fr-FR')} - {new Date(session.end_date).toLocaleDateString('fr-FR')}
+                      {session.start_date ? new Date(session.start_date).toLocaleDateString('fr-FR') : 'À définir'} 
+                      {' '} - {' '} 
+                      {session.end_date ? new Date(session.end_date).toLocaleDateString('fr-FR') : 'À définir'}
                     </div>
                   </Td>
                   <Td>
@@ -88,9 +121,47 @@ export default function SessionsPage() {
                     </div>
                   </Td>
                   <Td className="text-right">
-                    <button className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
-                      <MoreHorizontal size={18} />
-                    </button>
+                    
+                    {/* Bouton d'action et Dropdown */}
+                    <div className="relative inline-block text-left" ref={openMenuId === session.id ? menuRef : null}>
+                      <button 
+                        onClick={(e) => toggleMenu(e, session.id)}
+                        className={`p-2 rounded-lg transition-colors ${openMenuId === session.id ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+
+                      {/* Le Menu Flottant */}
+                      <AnimatePresence>
+                        {openMenuId === session.id && (
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden"
+                          >
+                            <button 
+                              onClick={() => router.push(`/dashboard/sessions/${session.id}`)}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-brand-600 transition-colors text-left"
+                            >
+                              <Eye size={16} />
+                              Voir le détail
+                            </button>
+                            <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left">
+                              <UsersIcon size={16} />
+                              Gérer les apprenants
+                            </button>
+                            <div className="h-px bg-slate-100 my-1"></div>
+                            <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left">
+                              <FileText size={16} />
+                              Bilan financier (Inqom)
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
                   </Td>
                 </motion.tr>
               ))
