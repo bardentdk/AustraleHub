@@ -33,12 +33,12 @@ export default function SessionsPage() {
       
       if (!error && data) {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // On compare uniquement les dates, pas les heures
+        today.setHours(0, 0, 0, 0); 
         
         const cleanedSessions = data
           .filter(session => {
-            // Filtre 1 : Exclure tout ce qui commence par MPI_
-            if (session.title && session.title.startsWith('MPI_')) {
+            // CORRECTION ICI : On filtre sur "MPI" tout court pour attraper "MPI-" et "MPI_"
+            if (session.title && session.title.startsWith('MPI')) {
               return false;
             }
             return true;
@@ -49,7 +49,7 @@ export default function SessionsPage() {
             if (session.end_date) {
               const endDate = new Date(session.end_date);
               if (endDate < today && currentStatus !== 'completed') {
-                currentStatus = 'completed'; // Force le statut à Terminé
+                currentStatus = 'completed'; 
               }
             }
             return { ...session, status: currentStatus };
