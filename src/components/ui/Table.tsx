@@ -21,7 +21,7 @@ export const Th = ({ children }: { children: React.ReactNode }) => (
   </th>
 );
 
-export const Td = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+export const Td = ({ children, className = "" }: { children: React.ReactNode; className?: string; colSpan?: number }) => (
   <td className={`px-6 py-4 text-sm text-slate-600 border-b border-slate-100 last:border-0 ${className}`}>
     {children}
   </td>
