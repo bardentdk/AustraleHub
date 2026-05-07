@@ -2,19 +2,13 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    // On peut réutiliser la même sécurité que pour l'entrée pour simplifier
-    if (authHeader !== `Bearer ${process.env.N8N_WEBHOOK_SECRET}`) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { action_type, payload } = body;
 
-    // URL du Webhook N8N dédié aux ACTIONS (à créer dans N8N)
-    // On utilise une variable d'env pour pouvoir changer l'URL selon l'env
+    // L'URL de ton webhook N8N Dispatcher
     const N8N_ACTION_WEBHOOK_URL = "https://n8n.srv1049957.hstgr.cloud/webhook/actions-dispatcher";
 
+    // C'est le serveur qui ajoute le secret de manière totalement invisible pour le navigateur
     const response = await fetch(N8N_ACTION_WEBHOOK_URL, {
       method: 'POST',
       headers: { 
@@ -29,9 +23,11 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!response.ok) throw new Error('Échec de la communication avec N8N');
+    if (!response.ok) {
+      throw new Error(`Échec de la communication avec N8N (Status: ${response.status})`);
+    }
 
-    return NextResponse.json({ success: true, message: 'Action transmise à N8N' });
+    return NextResponse.json({ success: true, message: 'Action transmise à N8N avec succès' });
 
   } catch (error: any) {
     console.error("Erreur Action API:", error.message);

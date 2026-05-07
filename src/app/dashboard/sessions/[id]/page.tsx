@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Interface étendue pour inclure la gamification locale (à ajouter plus tard dans Supabase)
 interface GamifiedStudent extends Student {
   score?: number;
   convention_signed?: boolean;
@@ -43,12 +42,11 @@ export default function SessionDetailPage() {
       if (!sessionError) setSession(sessionData);
       
       if (!studentsError && studentsData) {
-        // Simulation de données de gamification pour la démo
         const enrichedStudents = studentsData.map((s, index) => ({
           ...s,
-          score: 150 - (index * 30) + Math.floor(Math.random() * 20), // Score fictif décroissant
-          convention_signed: index % 3 !== 0 // 1 sur 3 n'a pas signé
-        })).sort((a, b) => (b.score || 0) - (a.score || 0)); // Tri par score (Leaderboard)
+          score: 150 - (index * 30) + Math.floor(Math.random() * 20),
+          convention_signed: index % 3 !== 0 
+        })).sort((a, b) => (b.score || 0) - (a.score || 0));
 
         setStudents(enrichedStudents);
       }
@@ -59,19 +57,17 @@ export default function SessionDetailPage() {
     if (sessionId) fetchSessionDetails();
   }, [sessionId, supabase]);
 
-  // Fonction générique pour déclencher un Webhook N8N
   const triggerN8NAction = async (actionType: string, payload: any, actionId: string) => {
     setActionLoading(actionId);
     try {
       await fetch('/api/actions', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer mon_super_secret_n8n_habibou_2024'
+          'Content-Type': 'application/json'
+          // Token retiré ici !
         },
         body: JSON.stringify({ action_type: actionType, payload })
       });
-      // Effet visuel de succès (dans un vrai SaaS on mettrait un toast de notification)
       setTimeout(() => setActionLoading(null), 1000);
     } catch (e) {
       console.error("Erreur d'action", e);
@@ -92,12 +88,10 @@ export default function SessionDetailPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto space-y-8">
       
-      {/* Header Navigation */}
       <button onClick={() => router.push('/dashboard/sessions')} className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
         <ArrowLeft size={16} /> Retour aux sessions
       </button>
 
-      {/* Hero Card Session (inchangée) */}
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
           <CalendarDays size={200} />
@@ -130,10 +124,7 @@ export default function SessionDetailPage() {
         </div>
       </div>
 
-      {/* Grid de contenu : 2 colonnes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Colonne Gauche : Administratif & Conventions */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -191,7 +182,6 @@ export default function SessionDetailPage() {
           </Table>
         </div>
 
-        {/* Colonne Droite : Gamification & Leaderboard */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -220,7 +210,6 @@ export default function SessionDetailPage() {
                     </div>
                   </div>
 
-                  {/* Bouton Récompense pour les meilleurs */}
                   {index < 3 && (
                     <button 
                       onClick={() => triggerN8NAction('SEND_REWARD', { studentId: student.id, rank: index + 1, score: student.score }, `reward_${student.id}`)}

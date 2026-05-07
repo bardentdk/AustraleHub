@@ -16,8 +16,8 @@ export function NuclearOnboardingButton({ dealId, clientName }: Props) {
       const res = await fetch('/api/actions', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer mon_super_secret_n8n_habibou_2024' // À dynamiser via un context/auth plus tard
+          'Content-Type': 'application/json'
+          // Le token a été retiré d'ici pour des raisons de sécurité !
         },
         body: JSON.stringify({
           action_type: 'NUCLEAR_ONBOARDING',

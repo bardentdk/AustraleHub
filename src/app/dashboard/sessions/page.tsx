@@ -23,7 +23,7 @@ export default function SessionsPage() {
   const supabase = createClient();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fetch des sessions
+  // Fetch et Filtre des sessions
   useEffect(() => {
     const fetchSessions = async () => {
       const { data, error } = await supabase
@@ -31,11 +31,36 @@ export default function SessionsPage() {
         .select('*')
         .order('start_date', { ascending: false });
       
-      if (!error) setSessions(data);
+      if (!error && data) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // On compare uniquement les dates, pas les heures
+        
+        const cleanedSessions = data
+          .filter(session => {
+            // Filtre 1 : Exclure tout ce qui commence par MPI_
+            if (session.title && session.title.startsWith('MPI_')) {
+              return false;
+            }
+            return true;
+          })
+          .map(session => {
+            // Filtre 2 : Corriger le statut si la date est dépassée
+            let currentStatus = session.status;
+            if (session.end_date) {
+              const endDate = new Date(session.end_date);
+              if (endDate < today && currentStatus !== 'completed') {
+                currentStatus = 'completed'; // Force le statut à Terminé
+              }
+            }
+            return { ...session, status: currentStatus };
+          });
+
+        setSessions(cleanedSessions);
+      }
       setLoading(false);
     };
     fetchSessions();
-  }, []);
+  }, [supabase]);
 
   // Fermer le menu si on clique en dehors
   useEffect(() => {
@@ -49,7 +74,7 @@ export default function SessionsPage() {
   }, []);
 
   const toggleMenu = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Empêche le clic de se propager
+    e.stopPropagation();
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
@@ -110,8 +135,8 @@ export default function SessionsPage() {
                     </div>
                   </Td>
                   <Td>
-                    <Badge variant={session.status === 'in_progress' ? 'success' : 'info'}>
-                      {session.status === 'in_progress' ? 'En cours' : 'Planifié'}
+                    <Badge variant={session.status === 'in_progress' ? 'success' : session.status === 'completed' ? 'default' : 'info'}>
+                      {session.status === 'in_progress' ? 'En cours' : session.status === 'completed' ? 'Terminé' : 'Planifié'}
                     </Badge>
                   </Td>
                   <Td>
@@ -122,7 +147,6 @@ export default function SessionsPage() {
                   </Td>
                   <Td className="text-right">
                     
-                    {/* Bouton d'action et Dropdown */}
                     <div className="relative inline-block text-left" ref={openMenuId === session.id ? menuRef : null}>
                       <button 
                         onClick={(e) => toggleMenu(e, session.id)}
@@ -131,7 +155,6 @@ export default function SessionsPage() {
                         <MoreHorizontal size={18} />
                       </button>
 
-                      {/* Le Menu Flottant */}
                       <AnimatePresence>
                         {openMenuId === session.id && (
                           <motion.div 
@@ -155,7 +178,7 @@ export default function SessionsPage() {
                             <div className="h-px bg-slate-100 my-1"></div>
                             <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left">
                               <FileText size={16} />
-                              Bilan financier (Inqom)
+                              Bilan financier
                             </button>
                           </motion.div>
                         )}
