@@ -13,6 +13,7 @@ import {
   Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NuclearOnboardingButton } from '@/components/dashboard/NuclearOnboardingButton';
 
 // Définition des colonnes de notre pipeline (Ordre logique de vente)
 const PIPELINE_STAGES = [
@@ -152,6 +153,12 @@ export default function CrmPipelinePage() {
                                 <Target size={12} className="text-slate-400" />
                                 {lead.probability}%
                               </div>
+                            )}
+                            {lead.stage === 'Gagné' && (
+                            <NuclearOnboardingButton 
+                                dealId={lead.external_id_hubspot || lead.id} 
+                                clientName={lead.deal_name} 
+                            />
                             )}
                           </div>
 
